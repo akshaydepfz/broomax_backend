@@ -78,5 +78,10 @@ CREATE TABLE IF NOT EXISTS admins (
 	if _, err := DB.Exec(ddl); err != nil {
 		return fmt.Errorf("migrate admins: %w", err)
 	}
+	if IsPostgres {
+		if err := database.MigrateProducts(DB); err != nil {
+			return fmt.Errorf("migrate products: %w", err)
+		}
+	}
 	return nil
 }
