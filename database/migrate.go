@@ -10,12 +10,27 @@ import (
 //go:embed migrations/001_products.sql
 var productsMigrationSQL string
 
-// ApplyMigrationSQL executes SQL statements separated by semicolons.
+// ApplyMigrationSQL runs the full migration script inside a single transaction.
+// PostgreSQL parses semicolons and line comments server-side, so the script is
+// not split on the client (client-side splitting can drop statements that are
+// preceded by -- comments).
 func ApplyMigrationSQL(db *sql.DB, raw string) error {
-	for _, stmt := range splitSQL(raw) {
-		if _, err := db.Exec(stmt); err != nil {
-			return fmt.Errorf("migration failed: %w\nstatement: %s", err, truncate(stmt, 120))
-		}
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("migration begin: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if _, err := tx.Exec(raw); err != nil {
+		return fmt.Errorf("migration failed: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("migration commit: %w", err)
 	}
 	return nil
 }
@@ -23,41 +38,4 @@ func ApplyMigrationSQL(db *sql.DB, raw string) error {
 // MigrateProducts applies the embedded product catalog schema (PostgreSQL only).
 func MigrateProducts(db *sql.DB) error {
 	return ApplyMigrationSQL(db, productsMigrationSQL)
-}
-
-func splitSQL(input string) []string {
-	var out []string
-	var b strings.Builder
-	inSingle := false
-	inDouble := false
-	for i := 0; i < len(input); i++ {
-		ch := input[i]
-		if ch == '\'' && !inDouble {
-			inSingle = !inSingle
-		}
-		if ch == '"' && !inSingle {
-			inDouble = !inDouble
-		}
-		if ch == ';' && !inSingle && !inDouble {
-			stmt := strings.TrimSpace(b.String())
-			if stmt != "" && !strings.HasPrefix(stmt, "--") {
-				out = append(out, stmt)
-			}
-			b.Reset()
-			continue
-		}
-		b.WriteByte(ch)
-	}
-	if tail := strings.TrimSpace(b.String()); tail != "" {
-		out = append(out, tail)
-	}
-	return out
-}
-
-func truncate(s string, n int) string {
-	s = strings.ReplaceAll(s, "\n", " ")
-	if len(s) <= n {
-		return s
-	}
-	return s[:n] + "..."
 }
