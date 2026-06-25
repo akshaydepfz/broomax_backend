@@ -25,7 +25,11 @@ func main() {
 	if helper.IsPostgres {
 		repo := repository.NewPostgresProductRepository(helper.DB)
 		svc := service.NewProductService(repo)
-		productHandler = handler.NewProductHandler(svc)
+		var err error
+		productHandler, err = handler.NewProductHandler(svc)
+		if err != nil {
+			log.Fatalf("product handler: %v", err)
+		}
 	}
 
 	engine := router.Setup(productHandler)

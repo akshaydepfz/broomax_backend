@@ -2,38 +2,32 @@ package handler
 
 import (
 	"errors"
-	"io"
 	"mime/multipart"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"oryoo.com/dto"
+	"oryoo.com/helper"
 	"oryoo.com/repository"
 	"oryoo.com/service"
 )
 
 // ProductHandler serves product HTTP endpoints.
 type ProductHandler struct {
-	svc       *service.ProductService
-	uploadDir string
-	baseURL   string
+	svc      *service.ProductService
+	uploader *helper.S3Uploader
 }
 
 // NewProductHandler creates a ProductHandler.
-func NewProductHandler(svc *service.ProductService) *ProductHandler {
-	dir := strings.TrimSpace(os.Getenv("UPLOAD_DIR"))
-	if dir == "" {
-		dir = "./uploads"
+func NewProductHandler(svc *service.ProductService) (*ProductHandler, error) {
+	uploader, err := helper.NewS3UploaderFromEnv()
+	if err != nil {
+		return nil, err
 	}
-	base := strings.TrimRight(strings.TrimSpace(os.Getenv("UPLOAD_BASE_URL")), "/")
-	if base == "" {
-		base = "/uploads"
-	}
-	return &ProductHandler{svc: svc, uploadDir: dir, baseURL: base}
+	return &ProductHandler{svc: svc, uploader: uploader}, nil
 }
 
 // Create handles POST /products.
@@ -220,12 +214,12 @@ func (h *ProductHandler) AddDocuments(c *gin.Context) {
 }
 
 func (h *ProductHandler) saveUploadedFile(c *gin.Context, fh *multipart.FileHeader, subdir string) (string, error) {
-	if err := os.MkdirAll(filepath.Join(h.uploadDir, subdir), 0o755); err != nil {
-		return "", err
-	}
 	ext := filepath.Ext(fh.Filename)
 	name := uuid.NewString() + ext
-	dest := filepath.Join(h.uploadDir, subdir, name)
+	contentType := fh.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = helper.ContentTypeForFilename(fh.Filename)
+	}
 
 	src, err := fh.Open()
 	if err != nil {
@@ -233,16 +227,7 @@ func (h *ProductHandler) saveUploadedFile(c *gin.Context, fh *multipart.FileHead
 	}
 	defer src.Close()
 
-	out, err := os.Create(dest)
-	if err != nil {
-		return "", err
-	}
-	defer out.Close()
-
-	if _, err := io.Copy(out, src); err != nil {
-		return "", err
-	}
-	return h.baseURL + "/" + subdir + "/" + name, nil
+	return h.uploader.Upload(c.Request.Context(), src, contentType, subdir, name)
 }
 
 func ok(c *gin.Context, status int, data any) {

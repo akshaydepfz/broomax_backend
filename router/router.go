@@ -19,14 +19,6 @@ func Setup(productHandler *handler.ProductHandler) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery(), corsMiddleware())
 
-	// Static uploads
-	uploadDir := strings.TrimSpace(os.Getenv("UPLOAD_DIR"))
-	if uploadDir == "" {
-		uploadDir = "./uploads"
-	}
-	_ = os.MkdirAll(uploadDir, 0o755)
-	r.Static("/uploads", uploadDir)
-
 	// Admin routes (legacy net/http handlers bridged via Gin)
 	r.POST("/admin/login", gin.WrapF(handler.AdminLoginHandler))
 	r.POST("/admin/create-admin", gin.WrapF(handler.CreateAdminHandler))
