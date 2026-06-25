@@ -8,14 +8,14 @@ import (
 
 // CreateProductRequest is the body for POST /products.
 type CreateProductRequest struct {
-	Name        string  `json:"name" validate:"required,min=2,max=255"`
-	SKU         string  `json:"sku" validate:"required,min=2,max=100"`
-	ProductCode string  `json:"product_code" validate:"omitempty,max=100"`
-	Slug        string  `json:"slug" validate:"omitempty,max=255"`
+	Name        string `json:"name" validate:"required,min=2,max=255"`
+	SKU         string `json:"sku" validate:"required,min=2,max=100"`
+	ProductCode string `json:"product_code" validate:"omitempty,max=100"`
+	Slug        string `json:"slug" validate:"omitempty,max=255"`
 
-	CategoryID      string `json:"category_id" validate:"required,uuid"`
-	SubCategoryID   string `json:"sub_category_id" validate:"omitempty,uuid"`
-	BrandID         string `json:"brand_id" validate:"required,uuid"`
+	CategoryID    string `json:"category_id" validate:"omitempty,uuid"`
+	SubCategoryID string `json:"sub_category_id" validate:"omitempty,uuid"`
+	BrandID       string `json:"brand_id" validate:"omitempty,uuid"`
 
 	Description      string `json:"description" validate:"omitempty,max=5000"`
 	ShortDescription string `json:"short_description" validate:"omitempty,max=500"`
@@ -43,11 +43,11 @@ type CreateProductRequest struct {
 	CatalogPDF  string `json:"catalog_pdf" validate:"omitempty"`
 	WarrantyPDF string `json:"warranty_pdf" validate:"omitempty"`
 
-	CompatibleVehicleBrands []string               `json:"compatible_vehicle_brands"`
-	CompatibleModels        []string               `json:"compatible_models"`
-	CompatibleYears         []string               `json:"compatible_years"`
-	SupplierIDs             []string               `json:"supplier_ids" validate:"omitempty,dive,uuid"`
-	WarehouseIDs            []string               `json:"warehouse_ids" validate:"omitempty,dive,uuid"`
+	CompatibleVehicleBrands []string                      `json:"compatible_vehicle_brands"`
+	CompatibleModels        []string                      `json:"compatible_models"`
+	CompatibleYears         []string                      `json:"compatible_years"`
+	SupplierIDs             []string                      `json:"supplier_ids" validate:"omitempty,dive,uuid"`
+	WarehouseIDs            []string                      `json:"warehouse_ids" validate:"omitempty,dive,uuid"`
 	Specifications          []models.ProductSpecification `json:"specifications"`
 	Variants                []models.ProductVariant       `json:"variants"`
 
@@ -58,10 +58,10 @@ type CreateProductRequest struct {
 
 // UpdateProductRequest is the body for PUT /products/:id.
 type UpdateProductRequest struct {
-	Name        *string  `json:"name" validate:"omitempty,min=2,max=255"`
-	SKU         *string  `json:"sku" validate:"omitempty,min=2,max=100"`
-	ProductCode *string  `json:"product_code" validate:"omitempty,max=100"`
-	Slug        *string  `json:"slug" validate:"omitempty,max=255"`
+	Name        *string `json:"name" validate:"omitempty,min=2,max=255"`
+	SKU         *string `json:"sku" validate:"omitempty,min=2,max=100"`
+	ProductCode *string `json:"product_code" validate:"omitempty,max=100"`
+	Slug        *string `json:"slug" validate:"omitempty,max=255"`
 
 	CategoryID    *string `json:"category_id" validate:"omitempty,uuid"`
 	SubCategoryID *string `json:"sub_category_id" validate:"omitempty,uuid"`
@@ -93,13 +93,13 @@ type UpdateProductRequest struct {
 	CatalogPDF  *string `json:"catalog_pdf" validate:"omitempty"`
 	WarrantyPDF *string `json:"warranty_pdf" validate:"omitempty"`
 
-	CompatibleVehicleBrands []string                        `json:"compatible_vehicle_brands"`
-	CompatibleModels        []string                        `json:"compatible_models"`
-	CompatibleYears         []string                        `json:"compatible_years"`
-	SupplierIDs             []string                        `json:"supplier_ids" validate:"omitempty,dive,uuid"`
-	WarehouseIDs            []string                        `json:"warehouse_ids" validate:"omitempty,dive,uuid"`
-	Specifications          []models.ProductSpecification   `json:"specifications"`
-	Variants                []models.ProductVariant         `json:"variants"`
+	CompatibleVehicleBrands []string                      `json:"compatible_vehicle_brands"`
+	CompatibleModels        []string                      `json:"compatible_models"`
+	CompatibleYears         []string                      `json:"compatible_years"`
+	SupplierIDs             []string                      `json:"supplier_ids" validate:"omitempty,dive,uuid"`
+	WarehouseIDs            []string                      `json:"warehouse_ids" validate:"omitempty,dive,uuid"`
+	Specifications          []models.ProductSpecification `json:"specifications"`
+	Variants                []models.ProductVariant       `json:"variants"`
 
 	MetaTitle       *string `json:"meta_title" validate:"omitempty,max=255"`
 	MetaDescription *string `json:"meta_description" validate:"omitempty,max=500"`

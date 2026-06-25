@@ -53,6 +53,14 @@ func (r *PostgresProductRepository) Create(ctx context.Context, p *models.Produc
 	if p.SubCategoryID != "" {
 		subCat = p.SubCategoryID
 	}
+	var category any
+	if p.CategoryID != "" {
+		category = p.CategoryID
+	}
+	var brand any
+	if p.BrandID != "" {
+		brand = p.BrandID
+	}
 
 	err = tx.QueryRowContext(ctx, `
 		INSERT INTO products (
@@ -73,7 +81,7 @@ func (r *PostgresProductRepository) Create(ctx context.Context, p *models.Produc
 			$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34
 		) RETURNING id, created_at, updated_at`,
 		p.Name, p.SKU, p.ProductCode, p.Slug,
-		p.CategoryID, subCat, p.BrandID,
+		category, subCat, brand,
 		p.Description, p.ShortDescription,
 		p.DealerPrice, p.RetailPrice, p.MRP,
 		p.GSTRate, p.HSNCode,
@@ -253,6 +261,14 @@ func (r *PostgresProductRepository) Update(ctx context.Context, p *models.Produc
 	if p.SubCategoryID != "" {
 		subCat = p.SubCategoryID
 	}
+	var category any
+	if p.CategoryID != "" {
+		category = p.CategoryID
+	}
+	var brand any
+	if p.BrandID != "" {
+		brand = p.BrandID
+	}
 
 	res, err := tx.ExecContext(ctx, `
 		UPDATE products SET
@@ -270,7 +286,7 @@ func (r *PostgresProductRepository) Update(ctx context.Context, p *models.Produc
 			updated_by=$33, updated_at=now()
 		WHERE id=$34`,
 		p.Name, p.SKU, p.ProductCode, p.Slug,
-		p.CategoryID, subCat, p.BrandID,
+		category, subCat, brand,
 		p.Description, p.ShortDescription,
 		p.DealerPrice, p.RetailPrice, p.MRP,
 		p.GSTRate, p.HSNCode,
@@ -348,6 +364,9 @@ func (r *PostgresProductRepository) SlugExists(ctx context.Context, slug string,
 }
 
 func (r *PostgresProductRepository) ResolveCategoryName(ctx context.Context, categoryID string) (string, error) {
+	if categoryID == "" {
+		return "", nil
+	}
 	var name string
 	err := r.db.QueryRowContext(ctx, `SELECT name FROM categories WHERE id=$1`, categoryID).Scan(&name)
 	if err == sql.ErrNoRows {
@@ -369,6 +388,9 @@ func (r *PostgresProductRepository) ResolveSubCategoryName(ctx context.Context, 
 }
 
 func (r *PostgresProductRepository) ResolveBrandName(ctx context.Context, brandID string) (string, error) {
+	if brandID == "" {
+		return "", nil
+	}
 	var name string
 	err := r.db.QueryRowContext(ctx, `SELECT name FROM brands WHERE id=$1`, brandID).Scan(&name)
 	if err == sql.ErrNoRows {
@@ -452,14 +474,14 @@ type rowScanner interface {
 
 func scanProduct(s rowScanner) (*models.Product, error) {
 	var p models.Product
-	var subCatID sql.NullString
+	var categoryID, subCatID, brandID sql.NullString
 	var cvb, spec, variants, cm, cy []byte
 
 	err := s.Scan(
 		&p.ID, &p.Name, &p.SKU, &p.ProductCode, &p.Slug,
-		&p.CategoryID, &p.CategoryName,
+		&categoryID, &p.CategoryName,
 		&subCatID, &p.SubCategoryName,
-		&p.BrandID, &p.BrandName,
+		&brandID, &p.BrandName,
 		&p.Description, &p.ShortDescription,
 		&p.DealerPrice, &p.RetailPrice, &p.MRP,
 		&p.GSTRate, &p.HSNCode,
@@ -473,8 +495,14 @@ func scanProduct(s rowScanner) (*models.Product, error) {
 	if err != nil {
 		return nil, err
 	}
+	if categoryID.Valid {
+		p.CategoryID = categoryID.String
+	}
 	if subCatID.Valid {
 		p.SubCategoryID = subCatID.String
+	}
+	if brandID.Valid {
+		p.BrandID = brandID.String
 	}
 	_ = json.Unmarshal(cvb, &p.CompatibleVehicleBrands)
 	_ = json.Unmarshal(spec, &p.Specifications)

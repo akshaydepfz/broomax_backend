@@ -37,9 +37,9 @@ CREATE TABLE IF NOT EXISTS products (
     product_code TEXT NOT NULL DEFAULT '',
     slug TEXT NOT NULL UNIQUE,
 
-    category_id UUID NOT NULL REFERENCES categories(id),
+    category_id UUID REFERENCES categories(id),
     sub_category_id UUID REFERENCES subcategories(id),
-    brand_id UUID NOT NULL REFERENCES brands(id),
+    brand_id UUID REFERENCES brands(id),
 
     description TEXT NOT NULL DEFAULT '',
     short_description TEXT NOT NULL DEFAULT '',
@@ -79,6 +79,9 @@ CREATE TABLE IF NOT EXISTS products (
     created_by TEXT NOT NULL DEFAULT '',
     updated_by TEXT NOT NULL DEFAULT ''
 );
+
+ALTER TABLE products ALTER COLUMN category_id DROP NOT NULL;
+ALTER TABLE products ALTER COLUMN brand_id DROP NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
 CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);
