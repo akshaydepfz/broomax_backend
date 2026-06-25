@@ -11,7 +11,7 @@ import (
 )
 
 // Setup builds the Gin engine with all routes and middleware.
-func Setup(productHandler *handler.ProductHandler) *gin.Engine {
+func Setup(productHandler *handler.ProductHandler, categoryHandler *handler.CategoryHandler) *gin.Engine {
 	if os.Getenv("GIN_MODE") == "" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -43,6 +43,22 @@ func Setup(productHandler *handler.ProductHandler) *gin.Engine {
 				protected.DELETE("/:id", productHandler.Delete)
 				protected.POST("/:id/images", productHandler.AddImages)
 				protected.POST("/:id/documents", productHandler.AddDocuments)
+			}
+		}
+	}
+
+	if categoryHandler != nil {
+		categories := r.Group("/categories")
+		{
+			categories.GET("", categoryHandler.List)
+			categories.GET("/:id", categoryHandler.GetByID)
+
+			protected := categories.Group("", adminAuthMiddleware())
+			{
+				protected.POST("", categoryHandler.Create)
+				protected.PUT("/:id", categoryHandler.Update)
+				protected.DELETE("/:id", categoryHandler.Delete)
+				protected.POST("/:id/image", categoryHandler.AddImage)
 			}
 		}
 	}

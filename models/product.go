@@ -88,13 +88,6 @@ type ProductDocument struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// Category reference entity.
-type Category struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Slug string `json:"slug"`
-}
-
 // SubCategory reference entity.
 type SubCategory struct {
 	ID         string `json:"id"`

@@ -18,21 +18,29 @@ func main() {
 	}
 
 	if !helper.IsPostgres {
-		log.Println("warning: product APIs require PostgreSQL (set DATABASE_URL or PG* env vars)")
+		log.Println("warning: product and category APIs require PostgreSQL (set DATABASE_URL or PG* env vars)")
 	}
 
 	var productHandler *handler.ProductHandler
+	var categoryHandler *handler.CategoryHandler
 	if helper.IsPostgres {
-		repo := repository.NewPostgresProductRepository(helper.DB)
-		svc := service.NewProductService(repo)
+		productRepo := repository.NewPostgresProductRepository(helper.DB)
+		productSvc := service.NewProductService(productRepo)
 		var err error
-		productHandler, err = handler.NewProductHandler(svc)
+		productHandler, err = handler.NewProductHandler(productSvc)
 		if err != nil {
 			log.Fatalf("product handler: %v", err)
 		}
+
+		categoryRepo := repository.NewPostgresCategoryRepository(helper.DB)
+		categorySvc := service.NewCategoryService(categoryRepo)
+		categoryHandler, err = handler.NewCategoryHandler(categorySvc)
+		if err != nil {
+			log.Fatalf("category handler: %v", err)
+		}
 	}
 
-	engine := router.Setup(productHandler)
+	engine := router.Setup(productHandler, categoryHandler)
 
 	addr := ":8080"
 	if p := os.Getenv("PORT"); p != "" {

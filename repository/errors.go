@@ -5,10 +5,14 @@ import (
 )
 
 var (
-	// ErrNotFound when a product row does not exist.
-	ErrNotFound = errors.New("product not found")
+	// ErrNotFound when a row does not exist.
+	ErrNotFound = errors.New("not found")
 	// ErrDuplicateSKU when sku or slug already exists.
 	ErrDuplicateSKU = errors.New("duplicate sku or slug")
+	// ErrDuplicateSlug when a category slug already exists.
+	ErrDuplicateSlug = errors.New("duplicate slug")
+	// ErrCategoryInUse when a category is referenced by products or subcategories.
+	ErrCategoryInUse = errors.New("category in use")
 	// ErrInvalidReference when category/brand/subcategory FK is invalid.
 	ErrInvalidReference = errors.New("invalid category, subcategory, or brand reference")
 )

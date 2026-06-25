@@ -108,6 +108,9 @@ CREATE TABLE IF NOT EXISTS admin_credentials (
 		if err := database.MigrateProducts(DB); err != nil {
 			return fmt.Errorf("migrate products: %w", err)
 		}
+		if err := database.MigrateCategories(DB); err != nil {
+			return fmt.Errorf("migrate categories: %w", err)
+		}
 	}
 	return nil
 }
