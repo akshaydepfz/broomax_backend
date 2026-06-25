@@ -78,6 +78,32 @@ CREATE TABLE IF NOT EXISTS admins (
 	if _, err := DB.Exec(ddl); err != nil {
 		return fmt.Errorf("migrate admins: %w", err)
 	}
+
+	if IsPostgres {
+		ddl = `
+CREATE TABLE IF NOT EXISTS admin_credentials (
+	id BIGSERIAL PRIMARY KEY,
+	email TEXT NOT NULL UNIQUE,
+	password_hash TEXT NOT NULL,
+	last_logged_at TIMESTAMPTZ,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+`
+	} else {
+		ddl = `
+CREATE TABLE IF NOT EXISTS admin_credentials (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	email TEXT NOT NULL UNIQUE,
+	password_hash TEXT NOT NULL,
+	last_logged_at TEXT,
+	created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+`
+	}
+	if _, err := DB.Exec(ddl); err != nil {
+		return fmt.Errorf("migrate admin_credentials: %w", err)
+	}
+
 	if IsPostgres {
 		if err := database.MigrateProducts(DB); err != nil {
 			return fmt.Errorf("migrate products: %w", err)

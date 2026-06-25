@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"oryoo.com/helper"
 	"oryoo.com/models"
@@ -44,7 +45,7 @@ func AdminLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	row, err := helper.GetAdminByEmail(req.Email)
+	row, err := helper.GetAdminCredentialByEmail(req.Email)
 	if err != nil {
 		if errors.Is(err, helper.ErrNotFound) {
 			writeJSON(w, http.StatusUnauthorized, jsonEnvelope{Success: false, Error: "invalid email or password"})
@@ -55,6 +56,12 @@ func AdminLoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if !helper.CheckPassword(row.PasswordHash, req.Password) {
 		writeJSON(w, http.StatusUnauthorized, jsonEnvelope{Success: false, Error: "invalid email or password"})
+		return
+	}
+
+	now := time.Now().UTC()
+	if err := helper.UpdateAdminCredentialLastLoggedAt(row.ID, now); err != nil {
+		writeJSON(w, http.StatusInternalServerError, jsonEnvelope{Success: false, Error: "could not update login time"})
 		return
 	}
 
@@ -69,9 +76,9 @@ func AdminLoginHandler(w http.ResponseWriter, r *http.Request) {
 		Data: models.AdminLoginResponseData{
 			Token: token,
 			Admin: models.Admin{
-				ID:    row.ID,
-				Email: row.Email,
-				Name:  row.Name,
+				ID:           row.ID,
+				Email:        row.Email,
+				LastLoggedAt: &now,
 			},
 		},
 	})
@@ -102,7 +109,7 @@ func CreateAdminHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := helper.CreateAdmin(req.Email, hash, req.Name)
+	id, err := helper.CreateAdminCredential(req.Email, hash)
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "unique") {
 			writeJSON(w, http.StatusConflict, jsonEnvelope{Success: false, Error: "email already registered"})

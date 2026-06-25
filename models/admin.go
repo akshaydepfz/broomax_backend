@@ -1,10 +1,13 @@
 package models
 
+import "time"
+
 // Admin is a safe admin profile for JSON responses (no secrets).
 type Admin struct {
-	ID    int64  `json:"id"`
-	Email string `json:"email"`
-	Name  string `json:"name"`
+	ID           int64      `json:"id"`
+	Email        string     `json:"email"`
+	Name         string     `json:"name,omitempty"`
+	LastLoggedAt *time.Time `json:"last_logged_at,omitempty"`
 }
 
 // AdminLoginRequest is the POST /admin/login body.
