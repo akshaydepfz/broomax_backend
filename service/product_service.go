@@ -7,6 +7,7 @@ import (
 	"math"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"oryoo.com/dto"
@@ -132,7 +133,11 @@ func (s *ProductService) BulkUpload(ctx context.Context, req dto.BulkUploadReque
 	for i, item := range req.Products {
 		if _, err := s.Create(ctx, item); err != nil {
 			resp.Failed++
-			resp.Errors = append(resp.Errors, fmt.Sprintf("row %d (%s): %v", i+1, item.SKU, err))
+			label := item.SKU
+			if label == "" {
+				label = item.Name
+			}
+			resp.Errors = append(resp.Errors, fmt.Sprintf("row %d (%s): %v", i+1, label, err))
 			continue
 		}
 		resp.Created++
@@ -189,6 +194,14 @@ func (s *ProductService) prepareProduct(ctx context.Context, p *models.Product, 
 	p.SKU = strings.TrimSpace(strings.ToUpper(p.SKU))
 	p.Name = strings.TrimSpace(p.Name)
 	p.HSNCode = strings.TrimSpace(p.HSNCode)
+
+	if p.SKU == "" && excludeID == "" {
+		sku, err := s.generateSKU(ctx)
+		if err != nil {
+			return err
+		}
+		p.SKU = sku
+	}
 
 	if p.Slug == "" {
 		p.Slug = slugify(p.Name)
@@ -372,6 +385,26 @@ func normalizeListQuery(q *dto.ProductListQuery) {
 	if q.SortOrder == "" {
 		q.SortOrder = "desc"
 	}
+}
+
+func (s *ProductService) generateSKU(ctx context.Context) (string, error) {
+	count, err := s.repo.Count(ctx)
+	if err != nil {
+		return "", err
+	}
+	year := time.Now().Year()
+	for attempt := 0; attempt < 100; attempt++ {
+		sku := fmt.Sprintf("BX-%d-%d", year, count+1)
+		exists, err := s.repo.SKUExists(ctx, sku, "")
+		if err != nil {
+			return "", err
+		}
+		if !exists {
+			return sku, nil
+		}
+		count++
+	}
+	return "", fmt.Errorf("could not generate unique sku")
 }
 
 func slugify(s string) string {

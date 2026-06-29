@@ -9,7 +9,7 @@ import (
 // CreateProductRequest is the body for POST /products.
 type CreateProductRequest struct {
 	Name        string `json:"name" validate:"required,min=2,max=255"`
-	SKU         string `json:"sku" validate:"required,min=2,max=100"`
+	SKU         string `json:"sku" validate:"omitempty,min=2,max=100"`
 	ProductCode string `json:"product_code" validate:"omitempty,max=100"`
 	Slug        string `json:"slug" validate:"omitempty,max=255"`
 

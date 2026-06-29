@@ -466,6 +466,12 @@ func (r *PostgresProductRepository) Exists(ctx context.Context, id string) (bool
 	return ok, err
 }
 
+func (r *PostgresProductRepository) Count(ctx context.Context) (int, error) {
+	var count int
+	err := r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM products`).Scan(&count)
+	return count, err
+}
+
 // --- helpers ---
 
 type rowScanner interface {

@@ -21,4 +21,5 @@ type ProductRepository interface {
 	AddImages(ctx context.Context, productID string, urls []string) ([]models.ProductImage, error)
 	AddDocuments(ctx context.Context, productID string, docs []models.ProductDocument) ([]models.ProductDocument, error)
 	Exists(ctx context.Context, id string) (bool, error)
+	Count(ctx context.Context) (int, error)
 }
